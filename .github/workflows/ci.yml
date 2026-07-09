@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Need the parent commit so the bdapps/ guard below can diff against
+          # it. The default depth of 1 would make HEAD~1 unresolvable, and the
+          # guard would skip itself on every push.
+          fetch-depth: 2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: pdo_mysql, curl, mbstring
+
+      - name: Syntax-check every PHP file
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            php -l "$f" > /dev/null || { echo "SYNTAX ERROR: $f"; fail=1; }
+          done < <(find . -name '*.php' -not -path './.git/*')
+          exit $fail
+
+      - name: Scoring and kickoff-time logic
+        # No .env and no MySQL here on purpose: db.php must be loadable without a
+        # database (it connects lazily), and these are the pure functions that
+        # decide who wins prizes and how kickoff times read to a Bengali speaker.
+        run: php tests/logic_test.php
+
+      - name: bdapps/ is vendor code and must stay byte-for-byte as shipped
+        # The security guarantees live in the docroot wrappers (otp_send.php,
+        # subscription_status.php, unsubscribe_me.php) precisely so these files
+        # never need editing. If a commit touches one, that assumption broke.
+        run: |
+          if ! git rev-parse HEAD~1 > /dev/null 2>&1; then
+            echo "Single commit — nothing to compare against, skipping."
+            exit 0
+          fi
+          if git diff --quiet HEAD~1 HEAD -- bdapps/; then
+            echo "OK: bdapps/ untouched"
+          else
+            echo "bdapps/ was modified by this push:"
+            git diff --stat HEAD~1 HEAD -- bdapps/
+            echo
+            echo "These are vendor files. Put the change in a docroot wrapper instead."
+            exit 1
+          fi

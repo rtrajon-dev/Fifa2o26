@@ -1,0 +1,89 @@
+name: Build cPanel ZIP on release
+
+# Trigger: push a version tag like v1.0.0  →  builds a deployable ZIP and
+# publishes it as a GitHub Release asset.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: # also allow manual runs from the Actions tab
+
+permissions:
+  contents: write # required to create a Release + upload the asset
+
+jobs:
+  release-zip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Syntax-check every PHP file
+        # A release ZIP with a parse error in it is worse than no release.
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            php -l "$f" > /dev/null || { echo "SYNTAX ERROR: $f"; fail=1; }
+          done < <(find . -name '*.php' -not -path './.git/*')
+          exit $fail
+
+      - name: Build deployable ZIP (cPanel-ready)
+        run: |
+          VERSION="${GITHUB_REF_NAME:-manual}"
+          ZIP="$RUNNER_TEMP/goaljeto-${VERSION}.zip"
+
+          # Runtime directories cPanel needs to exist and be writable.
+          mkdir -p sessions data/otp_rate
+
+          # Zip the project CONTENTS (so it extracts straight into public_html).
+          # Includes .htaccess + data/.htaccess + database/.htaccess +
+          # sessions/.htaccess (the dotfiles that do the security work).
+          # Excludes VCS/CI, secrets, and anything written at runtime.
+          zip -r "$ZIP" . \
+            -x '.git/*' \
+            -x '.github/*' \
+            -x '.env' \
+            -x 'data/otp_rate/*' \
+            -x 'sessions/sess_*' 'sessions/php_sess_*' \
+            -x '*.sqlite' '*.sqlite-journal' '*.db' \
+            -x '*.log' \
+            -x '.DS_Store'
+
+          echo "ZIP_PATH=$ZIP" >> "$GITHUB_ENV"
+          echo "Built:"
+          unzip -l "$ZIP" | tail -n +2 | head -40
+
+      - name: Fail if the ZIP contains secrets
+        # .env must never ship. Belt and braces: the -x above should already
+        # have excluded it, but a release that leaks bdapps credentials and the
+        # ADMIN_TOKEN (which decides who wins prizes) is not recoverable.
+        run: |
+          if unzip -l "$ZIP_PATH" | grep -qE '(^|/)\.env$'; then
+            echo "FATAL: .env is inside the release ZIP"
+            exit 1
+          fi
+          echo "OK: no .env in the ZIP"
+
+      - name: Verify the security dotfiles DID ship
+        run: |
+          for f in .htaccess data/.htaccess database/.htaccess sessions/.htaccess; do
+            unzip -l "$ZIP_PATH" | grep -q " $f\$" \
+              || { echo "FATAL: $f missing from the ZIP"; exit 1; }
+            echo "OK: $f present"
+          done
+
+      - name: Publish Release with the ZIP attached
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" "${ZIP_PATH}" \
+            --title "GoalJeeto ${GITHUB_REF_NAME}" \
+            --generate-notes
+
+      - name: Upload ZIP as artifact (for manual runs without a tag)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: goaljeto-zip
+          path: ${{ env.ZIP_PATH }}

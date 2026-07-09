@@ -1,6 +1,6 @@
 <?php
 session_start();
-$pageTitle = 'যোগাযোগ — GoalJeeto';
+$pageTitle = 'যোগাযোগ — Fifa2026';
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/navbar.php';
 ?>

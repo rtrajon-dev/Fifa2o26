@@ -1,6 +1,6 @@
 <?php
 // Shared <head>. Pass $pageTitle before including.
-$pageTitle = $pageTitle ?? 'GoalJeeto — গোল অনুমান করুন, জিতুন';
+$pageTitle = $pageTitle ?? 'Fifa2026 — গোল অনুমান করুন, জিতুন';
 ?>
 <!DOCTYPE html>
 <html lang="bn" data-theme="night">
@@ -14,7 +14,7 @@ $pageTitle = $pageTitle ?? 'GoalJeeto — গোল অনুমান করু
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="GoalJeeto — ফিফা বিশ্বকাপ ২০২৬-এর ম্যাচে কত গোল হবে অনুমান করুন। সঠিক অনুমানে সেরাদের জন্য পুরস্কার। রবি ও এয়ারটেল গ্রাহকদের জন্য।" />
+  <meta name="description" content="Fifa2026 — ফিফা বিশ্বকাপ ২০২৬-এর ম্যাচে কত গোল হবে অনুমান করুন। সঠিক অনুমানে সেরাদের জন্য পুরস্কার। রবি ও এয়ারটেল গ্রাহকদের জন্য।" />
   <title><?= htmlspecialchars($pageTitle) ?></title>
 
   <!-- Bengali font -->

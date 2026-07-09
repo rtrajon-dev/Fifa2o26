@@ -16,7 +16,7 @@ if (empty($_SESSION['phone'])) {
 
 require_once __DIR__ . '/db.php';
 
-$pageTitle = 'আমার অ্যাকাউন্ট — GoalJeeto';
+$pageTitle = 'আমার অ্যাকাউন্ট — Fifa2026';
 $phone   = $_SESSION['phone'];
 $display = $_SESSION['display'] ?? (substr($phone, 0, 3) . '•••' . substr($phone, -3));
 

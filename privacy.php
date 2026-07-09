@@ -1,6 +1,6 @@
 <?php
 session_start();
-$pageTitle = 'গোপনীয়তা নীতি — GoalJeeto';
+$pageTitle = 'গোপনীয়তা নীতি — Fifa2026';
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/navbar.php';
 ?>

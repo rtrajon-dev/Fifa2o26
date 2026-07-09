@@ -7,7 +7,7 @@ if (php_sapi_name() !== 'cli') {
     }
 }
 session_start();
-$pageTitle = 'GoalJeeto — গোল অনুমান করুন, জিতুন';
+$pageTitle = 'Fifa2026 — গোল অনুমান করুন, জিতুন';
 
 require_once __DIR__ . '/db.php';
 
@@ -64,7 +64,7 @@ try {
           LIMIT 5"
     )->fetchAll();
 } catch (Throwable $e) {
-    error_log('GoalJeeto index.php: database unavailable — ' . $e->getMessage());
+    error_log('Fifa2026 index.php: database unavailable — ' . $e->getMessage());
 }
 
 include __DIR__ . '/partials/head.php';

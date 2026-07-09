@@ -1,6 +1,6 @@
 <?php
 /**
- * Database helper for GoalJeeto (MySQL).
+ * Database helper for Fifa2026 (MySQL).
  *
  * Import database/goaljeto.sql into your cPanel MySQL database once (it creates
  * every table). Fixtures come from data/schedule.php via sync_matches.php;

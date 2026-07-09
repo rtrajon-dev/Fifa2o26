@@ -1,6 +1,6 @@
 <?php
 /**
- * Central configuration loader for GoalJeeto.
+ * Central configuration loader for Fifa2026.
  *
  * Reads goaljeto/.env once and exposes values via the env() helper, then
  * returns a structured config array. Every file (the bdapps scripts, the
@@ -57,10 +57,10 @@ return [
     'bdapps' => [
         'app_id'   => env('BDAPPS_APP_ID', ''),
         'password' => env('BDAPPS_PASSWORD', ''),
-        'app_name' => env('BDAPPS_APP_NAME', 'GoalJeeto'),
+        'app_name' => env('BDAPPS_APP_NAME', 'Fifa2026'),
         // applicationHash for the OTP request. If unset, falls back to app_name
         // so nothing breaks; set BDAPPS_APP_HASH to the real hash from bdapps.
-        'app_hash' => env('BDAPPS_APP_HASH') ?: env('BDAPPS_APP_NAME', 'GoalJeeto'),
+        'app_hash' => env('BDAPPS_APP_HASH') ?: env('BDAPPS_APP_NAME', 'Fifa2026'),
         'verify_ssl' => filter_var(env('BDAPPS_VERIFY_SSL', 'false'), FILTER_VALIDATE_BOOLEAN),
     ],
 

@@ -147,7 +147,7 @@ $tokenAttr = htmlspecialchars($token, ENT_QUOTES, 'UTF-8');
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>GoalJeeto — Settle matches</title>
+  <title>Fifa2026 — Settle matches</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
 </head>

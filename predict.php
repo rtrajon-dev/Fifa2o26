@@ -14,7 +14,7 @@ if (empty($_SESSION['phone'])) {
     exit;
 }
 
-$pageTitle = 'গোল অনুমান — GoalJeeto';
+$pageTitle = 'গোল অনুমান — Fifa2026';
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/navbar.php';
 ?>

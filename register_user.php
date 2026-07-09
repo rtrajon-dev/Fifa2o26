@@ -78,7 +78,7 @@ try {
     }
 } catch (Throwable $e) {
     // A DB hiccup must not cost the player their verified session.
-    error_log('GoalJeeto register_user.php: ' . $e->getMessage());
+    error_log('Fifa2026 register_user.php: ' . $e->getMessage());
 }
 
 // What to greet them with: the name they just typed, else the one already on

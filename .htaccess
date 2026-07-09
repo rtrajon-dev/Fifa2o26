@@ -1,4 +1,4 @@
-# ===== GoalJeeto — Apache / cPanel protection =====
+# ===== Fifa2026 — Apache / cPanel protection =====
 # Blocks direct web access to secrets, the database, SQL, log, and .txt files.
 # (.txt is blocked because bdapps/ writes runtime logs as .txt.)
 # Public PHP pages like index.php, predict.php, bdapps/*.php still work.

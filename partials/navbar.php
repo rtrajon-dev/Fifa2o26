@@ -22,7 +22,7 @@ $navPhone    = $_SESSION['phone'] ?? '';
     </div>
     <a href="/" class="btn btn-ghost px-2 text-lg sm:text-xl font-bold gap-1.5">
       <span class="text-xl sm:text-2xl">⚽</span>
-      <span style="background:linear-gradient(90deg,hsl(var(--p)),hsl(var(--s)));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;">GoalJeeto</span>
+      <span style="background:linear-gradient(90deg,hsl(var(--p)),hsl(var(--s)));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;">Fifa2026</span>
     </a>
   </div>
   <div class="navbar-center hidden lg:flex">

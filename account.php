@@ -172,8 +172,8 @@ include __DIR__ . '/partials/navbar.php';
     const btn = $('btn-status');
     setLoading(btn, true, 'যাচাই হচ্ছে...');
     try {
-      // No body: the server reads our number from the session, not from us.
-      const res = await fetch('bdapps/check_subscription.php', { method: 'POST' });
+      // No body: subscription_status.php reads our number from the session.
+      const res = await fetch('subscription_status.php', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       const box = $('status-box');
       if (data.isSubscribed) {

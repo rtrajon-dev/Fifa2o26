@@ -24,6 +24,16 @@ $isCli  = (php_sapi_name() === 'cli');
 $config = require __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
+// Authenticate BEFORE touching the database. Connecting first means an anonymous
+// caller can provoke a PDOException — and an uncaught one prints the DSN, the DB
+// username and the full stack trace straight into the response. Whoever holds
+// this token can decide who wins prizes, so nothing happens before it checks out.
+$token = $isCli ? '' : $config['admin_token'];
+if (!$isCli && ($token === '' || !hash_equals($token, $_GET['token'] ?? ''))) {
+    http_response_code(403);
+    exit('403 — invalid or missing ?token=. Set ADMIN_TOKEN in .env.');
+}
+
 $pdo = db();
 
 /**
@@ -102,11 +112,7 @@ if ($isCli) {
 }
 
 // ---------------------------------------------------------------- Web
-$token = $config['admin_token'];
-if ($token === '' || !hash_equals($token, $_GET['token'] ?? '')) {
-    http_response_code(403);
-    exit('403 — invalid or missing ?token=. Set ADMIN_TOKEN in .env.');
-}
+// (the ?token= check already ran, before the database was touched)
 
 $notice = null;
 $error  = null;

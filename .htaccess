@@ -27,5 +27,32 @@
     </IfModule>
 </FilesMatch>
 
+# ===== Vendor bdapps endpoints that must not be reachable directly =====
+# bdapps/ is kept byte-for-byte as shipped, so these three are fronted by
+# session-gated / rate-limited wrappers at the docroot instead:
+#
+#   bdapps/send_otp.php           -> otp_send.php            (rate limited)
+#   bdapps/check_subscription.php -> subscription_status.php (session gated)
+#   bdapps/unsubscribe.php        -> unsubscribe_me.php      (session gated)
+#
+# Left as shipped, each takes its target phone number from the request body and
+# answers with wildcard CORS — an SMS cannon and, for unsubscribe.php, a way for
+# anyone to cancel any subscriber. Denying them here closes that without editing
+# a single vendor file: the wrappers reach them via require(), which is a
+# filesystem read and is unaffected by these rules.
+#
+# NOTE: bdapps/verify_otp.php and bdapps/subscription_listener.php stay reachable
+# on purpose — the first is session-bound and safe, the second is a callback that
+# bdapps itself invokes.
+<FilesMatch "^(send_otp|check_subscription|unsubscribe)\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
 # Prevent directory listing
 Options -Indexes

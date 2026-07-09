@@ -346,7 +346,9 @@ include __DIR__ . '/partials/navbar.php';
 
 <script>
   // --- Endpoints (relative to docroot) ---
-  const SEND_OTP_URL   = 'bdapps/send_otp.php';
+  // otp_send.php is the rate-limited wrapper around bdapps/send_otp.php, which
+  // .htaccess denies directly. verify_otp.php is safe to call as shipped.
+  const SEND_OTP_URL   = 'otp_send.php';
   const VERIFY_OTP_URL = 'bdapps/verify_otp.php';
 
   // referenceNo is the only thing we carry between steps. The phone number lives
@@ -373,7 +375,10 @@ include __DIR__ . '/partials/navbar.php';
     }
   }
 
-  // STEP 1 — already subscribed? log in. Otherwise request an OTP.
+  // STEP 1 — request an OTP. Every entry into the app goes through this, whether
+  // the number is already subscribed (a login) or not (a subscription). There is
+  // deliberately no "already subscribed → straight in" shortcut: proving a number
+  // is subscribed is not proving the person at the keyboard owns it.
   async function goToOtp() {
     const btn = $('btn-send');
     const errEl = $('err-phone');
@@ -387,23 +392,6 @@ include __DIR__ . '/partials/navbar.php';
 
     setLoading(btn, true, 'অপেক্ষা করুন...');
     try {
-      const lres = await fetch('login.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ user_mobile: phone }),
-      });
-      const ldata = await lres.json().catch(() => ({}));
-
-      if (ldata.ok && ldata.subscribed) {
-        window.location.href = '/';   // logged in → home shows the welcome card
-        return;
-      }
-      if (!ldata.ok) {
-        showError(errEl, ldata.error || 'সংযোগ সমস্যা। আবার চেষ্টা করুন।');
-        return;
-      }
-
-      // Not subscribed → subscribe via OTP.
       const res = await fetch(SEND_OTP_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -455,6 +443,22 @@ include __DIR__ . '/partials/navbar.php';
 
       if (!res.ok || !data.subscriptionStatus) {
         showError(errEl, data.statusDetail || data.message || data.error || 'ভুল বা মেয়াদোত্তীর্ণ OTP।');
+        return;
+      }
+
+      // The OTP is good: promote the verified number into a real session now.
+      // register_user.php tells us whether this phone already had an account.
+      const reg = await fetch('register_user.php', { method: 'POST' });
+      const rdata = await reg.json().catch(() => ({}));
+
+      if (!reg.ok || !rdata.ok) {
+        showError(errEl, rdata.error || 'সেশন তৈরি করা যায়নি। আবার চেষ্টা করুন।');
+        return;
+      }
+
+      // Returning player → straight in. They already have a name on file.
+      if (rdata.returning) {
+        window.location.href = '/';
         return;
       }
 

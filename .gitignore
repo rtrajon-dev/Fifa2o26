@@ -12,6 +12,9 @@ database/backup*.sql
 sessions/sess_*
 sessions/php_sess_*
 
+# OTP rate-limit counters (server-generated, hashed keys)
+data/otp_rate/
+
 # Sensitive / generated files written by the bdapps scripts at runtime
 # (OTPs, phone numbers, request/response dumps — never commit these)
 bdapps/*.txt

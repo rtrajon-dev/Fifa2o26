@@ -101,10 +101,17 @@ foreach ($schedule as $i => $m) {
 // Flip any match whose kickoff has passed from 'upcoming' to 'locked' so the UI
 // stops offering it. (predict_api.php re-checks the clock anyway — this is just
 // keeping the stored status honest.)
-$locked = $pdo->exec(
+//
+// Compare against PHP's clock, not MySQL's NOW(). kickoff_at holds Dhaka wall
+// time, and config.php pins PHP to Asia/Dhaka — but MySQL has its own timezone,
+// which on a default cPanel box is UTC. NOW() there would run six hours behind
+// every kickoff and leave finished matches sitting at 'upcoming'.
+$lockStmt = $pdo->prepare(
     "UPDATE matches SET status = 'locked'
-      WHERE status = 'upcoming' AND kickoff_at <= NOW()"
+      WHERE status = 'upcoming' AND kickoff_at <= ?"
 );
+$lockStmt->execute([date('Y-m-d H:i:s')]);
+$locked = $lockStmt->rowCount();
 
 echo "\ndone — $created created, $updated updated, $skipped skipped, $locked locked at kickoff\n";
 

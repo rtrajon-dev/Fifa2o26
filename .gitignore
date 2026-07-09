@@ -1,10 +1,12 @@
 # Secrets — never commit real credentials
 .env
 
-# SQLite database files (data is local/generated; schema + seed are committed)
+# Database files. GoalJeeto runs on MySQL and database/goaljeto.sql is the schema,
+# so that one IS committed. Local dumps and leftover SQLite files are not.
 database/*.sqlite
 database/*.sqlite-journal
 database/*.db
+database/backup*.sql
 
 # Session files (server-generated, never commit) — but keep directory infrastructure
 sessions/sess_*

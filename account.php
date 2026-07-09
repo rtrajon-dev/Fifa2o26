@@ -162,7 +162,6 @@ include __DIR__ . '/partials/navbar.php';
 
 <script>
   const $ = (id) => document.getElementById(id);
-  const PHONE = '<?= htmlspecialchars($phone, ENT_QUOTES, "UTF-8") ?>';   // logged-in user's own number
 
   function setLoading(btn, on, label) {
     if (on) { btn.dataset.label = btn.innerHTML; btn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> ' + (label || ''); btn.disabled = true; }
@@ -173,11 +172,8 @@ include __DIR__ . '/partials/navbar.php';
     const btn = $('btn-status');
     setLoading(btn, true, 'যাচাই হচ্ছে...');
     try {
-      const res = await fetch('bdapps/check_subscription.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ user_mobile: PHONE }),
-      });
+      // No body: the server reads our number from the session, not from us.
+      const res = await fetch('bdapps/check_subscription.php', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       const box = $('status-box');
       if (data.isSubscribed) {

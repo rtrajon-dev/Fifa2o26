@@ -146,6 +146,22 @@ function bn($value)
 }
 
 /**
+ * Bengali has no AM/PM — the hour is qualified by a word for the part of the day,
+ * and it precedes the time ("রাত ২:০০", not "২:০০ রাত"). The boundaries below are
+ * the everyday ones; a 2 AM World Cup kickoff is রাত, a 6 PM one সন্ধ্যা.
+ */
+function bn_period(int $hour24): string
+{
+    if ($hour24 < 4)  { return 'রাত'; }      // 00:00–03:59
+    if ($hour24 < 6)  { return 'ভোর'; }      // 04:00–05:59
+    if ($hour24 < 12) { return 'সকাল'; }     // 06:00–11:59
+    if ($hour24 < 15) { return 'দুপুর'; }    // 12:00–14:59
+    if ($hour24 < 18) { return 'বিকাল'; }    // 15:00–17:59
+    if ($hour24 < 20) { return 'সন্ধ্যা'; }  // 18:00–19:59
+    return 'রাত';                            // 20:00–23:59
+}
+
+/**
  * Render a kickoff timestamp as "১০ জুলাই, রাত ২:০০" for display.
  */
 function bn_datetime(string $mysqlDateTime): string
@@ -157,5 +173,5 @@ function bn_datetime(string $mysqlDateTime): string
     ];
     $ts = strtotime($mysqlDateTime);
     return bn((int) date('j', $ts)) . ' ' . $months[(int) date('n', $ts)]
-         . ', ' . bn(date('g:i', $ts)) . ' ' . (date('a', $ts) === 'am' ? 'AM' : 'PM');
+         . ', ' . bn_period((int) date('G', $ts)) . ' ' . bn(date('g:i', $ts));
 }

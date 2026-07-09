@@ -1,14 +1,18 @@
 <?php
+/**
+ * Report the LOGGED-IN player's bdapps subscription status.
+ *
+ * The number comes from the session, not the request body. Reading it from POST
+ * (as the stock bdapps sample does, with wildcard CORS on top) turns this into a
+ * public oracle: anyone could ask whether any Bangladeshi number is subscribed to
+ * this app. That is a privacy leak with no upside — the only number a player has
+ * any business querying is their own.
+ *
+ * Input  (POST): none — the number is taken from the session
+ * Output (JSON): { isSubscribed, subscriptionStatus, statusCode, statusDetail }
+ */
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+header('Content-Type: application/json; charset=utf-8');
 
 // Ensure sessions persist on shared hosting (cPanel)
 if (php_sapi_name() !== 'cli') {
@@ -19,42 +23,26 @@ if (php_sapi_name() !== 'cli') {
 }
 session_start();
 
-$rawMobile = $_POST['user_mobile'] ?? '';
-$digits = preg_replace('/\D+/', '', $rawMobile);
-
-// Accept 018xxxxxxxx, 88018xxxxxxxx, or 8818xxxxxxxx and normalize to 018xxxxxxxx
-if (strpos($digits, '880') === 0 && strlen($digits) === 13) {
-    $digits = '0' . substr($digits, 3);
-} elseif (strpos($digits, '88') === 0 && strlen($digits) === 12) {
-    $digits = '0' . substr($digits, 2);
-}
-
-// Validate Bangladesh mobile number
-if (!preg_match('/^01[3-9][0-9]{8}$/', $digits)) {
-    echo json_encode([
-        'error' => 'Invalid mobile number format',
-        'providedNumber' => $rawMobile
-    ]);
+// --- gate: must be a logged-in player, checking themselves ---
+$phone = $_SESSION['phone'] ?? '';
+if (!preg_match('/^01[3-9]\d{8}$/', $phone)) {
+    http_response_code(403);
+    echo json_encode(['error' => 'not_logged_in']);
     exit;
 }
 
-// bdapps subscriberId format
-$subscriberId = 'tel:88' . $digits;
+$config       = require __DIR__ . '/../config.php';
+$subscriberId = 'tel:88' . $phone;
 
-$config = require __DIR__ . '/../config.php';
 $requestData = [
-    'version' => '1.0',
+    'version'       => '1.0',
     'applicationId' => $config['bdapps']['app_id'],
-    'password' => $config['bdapps']['password'],
-    'subscriberId' => $subscriberId,
+    'password'      => $config['bdapps']['password'],
+    'subscriberId'  => $subscriberId,
 ];
-
 $requestJson = json_encode($requestData);
 
-// BDApps subscription status API
-$url = 'https://developer.bdapps.com/subscription/getStatus';
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
+$ch = curl_init($config['endpoints']['sub_status']);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $requestJson);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -65,14 +53,13 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 ]);
 
 $responseJson = curl_exec($ch);
-$curlError = curl_error($ch);
-curl_close($ch);
+$curlError    = curl_error($ch);
+if (PHP_VERSION_ID < 80000) {
+    curl_close($ch);
+}
 
 if ($responseJson === false) {
-    echo json_encode([
-        'error' => 'cURL failed',
-        'details' => $curlError,
-    ]);
+    echo json_encode(['error' => 'cURL failed', 'details' => $curlError]);
     exit;
 }
 
@@ -82,17 +69,12 @@ if (!is_array($response)) {
     exit;
 }
 
+// Per the getStatus contract, subscription status is REGISTERED or UNREGISTERED.
 $status = strtoupper(trim($response['subscriptionStatus'] ?? ''));
-
-// Per getStatus contract, subscription status is REGISTERED or UNREGISTERED.
-$isSubscribed = ($status === 'REGISTERED');
 
 echo json_encode([
     'subscriptionStatus' => $status,
-    'isSubscribed' => $isSubscribed,
-    'statusCode' => $response['statusCode'] ?? null,
-    'statusDetail' => $response['statusDetail'] ?? null,
-    'version' => $response['version'] ?? null,
-    'subscriberId' => $subscriberId
+    'isSubscribed'       => ($status === 'REGISTERED'),
+    'statusCode'         => $response['statusCode'] ?? null,
+    'statusDetail'       => $response['statusDetail'] ?? null,
 ]);
-?>

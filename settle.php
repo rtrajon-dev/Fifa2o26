@@ -47,11 +47,14 @@ function settle_match(PDO $pdo, string $code, int $homeGoals, int $awayGoals, bo
 
     $pdo->beginTransaction();
     try {
+        // settled_at from PHP's clock (pinned to Asia/Dhaka in config.php), not
+        // MySQL's NOW() — the DB server's timezone is usually UTC and would
+        // stamp every result six hours off the kickoff times beside it.
         $pdo->prepare(
             "UPDATE matches
-                SET home_goals = ?, away_goals = ?, status = 'finished', settled_at = NOW()
+                SET home_goals = ?, away_goals = ?, status = 'finished', settled_at = ?
               WHERE id = ?"
-        )->execute([$homeGoals, $awayGoals, $match['id']]);
+        )->execute([$homeGoals, $awayGoals, date('Y-m-d H:i:s'), $match['id']]);
 
         $preds = $pdo->prepare('SELECT id, predicted_goals FROM predictions WHERE match_id = ?');
         $preds->execute([$match['id']]);

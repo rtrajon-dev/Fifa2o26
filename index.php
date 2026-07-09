@@ -11,48 +11,61 @@ $pageTitle = 'GoalJeeto — গোল অনুমান করুন, জিত
 
 require_once __DIR__ . '/db.php';
 
-// --- Fixtures straight from the DB. Edit data/schedule.php and run
-//     sync_matches.php to change what appears here — no code change. ---
-$matches = db()->query(
-  "SELECT code, label, home_team, away_team, venue, kickoff_at, status, home_goals, away_goals
-     FROM matches
-    WHERE is_active = 1
-    ORDER BY kickoff_at ASC"
-)->fetchAll();
-
-$openCount = 0;
-foreach ($matches as $m) {
-    if (match_is_open($m)) {
-        $openCount++;
-    }
-}
-$totalMatches = count($matches);
-$totalPlayers = (int) db()->query('SELECT COUNT(*) FROM users')->fetchColumn();
-
 // --- Rewards. These labels are DISPLAY ONLY: nothing is sent automatically, and
 //     no record of a win is written. Fulfil them yourself from this table. ---
 $prizes = ['২০০০ MB ডেটা', '১৫০০ MB ডেটা', '১০০০ MB ডেটা', '৫০০ MB ডেটা', '৫০০ MB ডেটা'];
 
-/**
- * Top-5 by total points across every SETTLED prediction.
- *
- * Ties are broken by who committed earliest (MIN(created_at)), which matters a
- * lot more here than it did in QuizJeeto: with only six goal buckets to choose
- * from, hundreds of players land on the same points total. Without a tiebreak
- * the prize column would be arbitrary.
- */
-$lbRows = db()->query(
-    "SELECT u.display_name, u.phone_masked,
-            SUM(p.points) AS points,
-            SUM(p.points = " . PTS_EXACT . ") AS exact_hits,
-            COUNT(*) AS played
-       FROM predictions p
-       JOIN users u ON u.id = p.user_id
-      WHERE p.is_settled = 1
-      GROUP BY u.id
-      ORDER BY points DESC, exact_hits DESC, MIN(p.created_at) ASC
-      LIMIT 5"
-)->fetchAll();
+$matches      = [];
+$lbRows       = [];
+$openCount    = 0;
+$totalMatches = 0;
+$totalPlayers = 0;
+
+// This is the public landing page: it must render even with no database behind
+// it (misconfigured .env, MySQL down mid-tournament). A visitor should see the
+// pitch and the registration card, not a blank 500. The counters simply read ০
+// and the leaderboard falls back to its "no results yet" empty state.
+try {
+    // --- Fixtures straight from the DB. Edit data/schedule.php and run
+    //     sync_matches.php to change what appears here — no code change. ---
+    $matches = db()->query(
+      "SELECT code, label, home_team, away_team, venue, kickoff_at, status, home_goals, away_goals
+         FROM matches
+        WHERE is_active = 1
+        ORDER BY kickoff_at ASC"
+    )->fetchAll();
+
+    foreach ($matches as $m) {
+        if (match_is_open($m)) {
+            $openCount++;
+        }
+    }
+    $totalMatches = count($matches);
+    $totalPlayers = (int) db()->query('SELECT COUNT(*) FROM users')->fetchColumn();
+
+    /**
+     * Top-5 by total points across every SETTLED prediction.
+     *
+     * Ties are broken by who committed earliest (MIN(created_at)), which matters a
+     * lot more here than it did in QuizJeeto: with only six goal buckets to choose
+     * from, hundreds of players land on the same points total. Without a tiebreak
+     * the prize column would be arbitrary.
+     */
+    $lbRows = db()->query(
+        "SELECT u.display_name, u.phone_masked,
+                SUM(p.points) AS points,
+                SUM(p.points = " . PTS_EXACT . ") AS exact_hits,
+                COUNT(*) AS played
+           FROM predictions p
+           JOIN users u ON u.id = p.user_id
+          WHERE p.is_settled = 1
+          GROUP BY u.id
+          ORDER BY points DESC, exact_hits DESC, MIN(p.created_at) ASC
+          LIMIT 5"
+    )->fetchAll();
+} catch (Throwable $e) {
+    error_log('GoalJeeto index.php: database unavailable — ' . $e->getMessage());
+}
 
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/navbar.php';

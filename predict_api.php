@@ -7,9 +7,10 @@
  * played. So this file only *records* predictions; settle.php awards the points
  * afterwards. Nothing here ever tells the client whether they were right.
  *
- * The rule that matters: a prediction is accepted only while
- * NOW() < matches.kickoff_at, checked HERE, against the database clock. The
- * browser's idea of whether a match is open is decoration.
+ * The rule that matters: a prediction is accepted only while now < kickoff_at,
+ * checked HERE on the server via match_is_open(), against PHP's clock (pinned to
+ * Asia/Dhaka in config.php, which is the timezone kickoff times are written in).
+ * The browser's idea of whether a match is open is decoration.
  *
  * Actions (?action=):
  *   list (POST) → every active match + this user's prediction + open/locked state

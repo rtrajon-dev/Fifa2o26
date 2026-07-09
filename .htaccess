@@ -1,0 +1,31 @@
+# ===== GoalJeeto — Apache / cPanel protection =====
+# Blocks direct web access to secrets, the database, SQL, log, and .txt files.
+# (.txt is blocked because bdapps/ writes runtime logs as .txt.)
+# Public PHP pages like index.php, predict.php, bdapps/*.php still work.
+# data/ has its own .htaccess denying everything — schedule.php is config, not a page.
+# sync_matches.php and settle.php stay reachable but demand ?token=<ADMIN_TOKEN>.
+
+# Deny sensitive file types anywhere under this folder
+<FilesMatch "\.(env|sqlite|sqlite-journal|db|sql|log|txt)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Deny hidden dotfiles (.env, .gitignore, etc.)
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Prevent directory listing
+Options -Indexes

@@ -1,0 +1,9 @@
+# Block ALL web access to the database folder (Apache / cPanel).
+# PHP can still read/write these files on the server; browsers cannot reach them.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

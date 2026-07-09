@@ -1,0 +1,22 @@
+# Secrets — never commit real credentials
+.env
+
+# SQLite database files (data is local/generated; schema + seed are committed)
+database/*.sqlite
+database/*.sqlite-journal
+database/*.db
+
+# Session files (server-generated, never commit) — but keep directory infrastructure
+sessions/sess_*
+sessions/php_sess_*
+
+# Sensitive / generated files written by the bdapps scripts at runtime
+# (OTPs, phone numbers, request/response dumps — never commit these)
+bdapps/*.txt
+bdapps/*.log
+*.txt
+*.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
